@@ -134,14 +134,26 @@ class AudioHandlerMusique extends BaseAudioHandler
 /// Instance unique, mise en place au démarrage.
 late AudioHandlerMusique audio;
 
+/// Message d'erreur si la session média n'a pas pu être ouverte.
+/// Affiché dans les réglages plutôt que perdu dans les journaux.
+String? audioInitError;
+
 Future<void> initAudio() async {
-  audio = await AudioService.init(
-    builder: () => AudioHandlerMusique(),
-    config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.musicorganizer.audio',
-      androidNotificationChannelName: 'Lecture',
-      androidNotificationOngoing: true,
-      androidStopForegroundOnPause: true,
-    ),
-  );
+  try {
+    audio = await AudioService.init(
+      builder: () => AudioHandlerMusique(),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: 'com.musicorganizer.audio',
+        androidNotificationChannelName: 'Lecture',
+        androidNotificationOngoing: true,
+        androidStopForegroundOnPause: true,
+      ),
+    );
+  } catch (e) {
+    // La session média a échoué : plutôt que de bloquer le démarrage sur
+    // un écran vide, on continue sans notification ni écran verrouillé.
+    // La lecture, elle, fonctionne toujours.
+    audioInitError = e.toString();
+    audio = AudioHandlerMusique();
+  }
 }

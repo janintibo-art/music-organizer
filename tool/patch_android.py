@@ -4,6 +4,7 @@
 Le script est idempotent : on peut le relancer sans risque.
 """
 
+import glob
 import os
 import re
 import sys
@@ -167,6 +168,51 @@ def patch_service_audio():
     return True
 
 
+def patch_main_activity():
+    """Fait heriter MainActivity de AudioServiceActivity.
+
+    audio_service l'exige pour que le service de lecture s'attache
+    correctement a l'activite. Sans ca, l'initialisation echoue au
+    demarrage et l'application reste sur un ecran vide.
+    """
+    trouves = glob.glob(
+        os.path.join("android", "app", "src", "main", "**", "MainActivity.kt"),
+        recursive=True)
+    trouves += glob.glob(
+        os.path.join("android", "app", "src", "main", "**", "MainActivity.java"),
+        recursive=True)
+
+    if not trouves:
+        print("ATTENTION : MainActivity introuvable.")
+        return False
+
+    for chemin in trouves:
+        with open(chemin, "r", encoding="utf-8") as f:
+            contenu = f.read()
+
+        if "AudioServiceActivity" in contenu:
+            print("MainActivity deja adaptee :", chemin)
+            continue
+
+        contenu = contenu.replace(
+            "import io.flutter.embedding.android.FlutterActivity",
+            "import com.ryanheise.audioservice.AudioServiceActivity")
+        contenu = contenu.replace(
+            "import io.flutter.embedding.android.FlutterActivity;",
+            "import com.ryanheise.audioservice.AudioServiceActivity;")
+        contenu = contenu.replace("FlutterActivity()", "AudioServiceActivity()")
+        contenu = contenu.replace("extends FlutterActivity",
+                                  "extends AudioServiceActivity")
+
+        with open(chemin, "w", encoding="utf-8") as f:
+            f.write(contenu)
+        print("MainActivity adaptee :", chemin)
+        print("---")
+        print(contenu)
+        print("---")
+    return True
+
+
 def patch_gradle():
     for name in ("build.gradle", "build.gradle.kts"):
         path = os.path.join("android", "app", name)
@@ -221,6 +267,7 @@ def patch_root_gradle():
 if __name__ == "__main__":
     ok = patch_manifest()
     ok = patch_service_audio() and ok
+    ok = patch_main_activity() and ok
     patch_gradle()
     patch_root_gradle()
     sys.exit(0 if ok else 1)

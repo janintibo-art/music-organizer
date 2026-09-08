@@ -100,7 +100,7 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Column(
                     children: [
                       Text(
-                        'MediaItem Organizer',
+                        'Music Organizer',
                         style: TextStyle(
                           fontSize: 19,
                           fontWeight: FontWeight.w700,
@@ -110,10 +110,10 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                       SizedBox(height: 5),
                       Text(
-                        'アニメ ライブラリ',
+                        'MA COLLECTION',
                         style: TextStyle(
                           fontSize: 11,
-                          letterSpacing: 3,
+                          letterSpacing: 3.5,
                           color: Palette.muted,
                         ),
                       ),

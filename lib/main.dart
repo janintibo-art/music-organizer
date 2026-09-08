@@ -191,10 +191,38 @@ AppBar darkAppBar({required Widget title, List<Widget>? actions}) {
   );
 }
 
+/// Erreurs survenues au démarrage, montrées à l'écran plutôt que
+/// silencieusement avalées.
+final List<String> startupErrors = [];
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initAudio();
-  await library.load();
+
+  // Un écran blanc muet est le pire des diagnostics : on affiche
+  // désormais l'erreur, lisiblement, dans les couleurs de l'application.
+  ErrorWidget.builder = (details) => Container(
+        color: Palette.ink,
+        padding: const EdgeInsets.all(24),
+        alignment: Alignment.center,
+        child: SingleChildScrollView(
+          child: Text(
+            'Une erreur est survenue :\n\n${details.exception}',
+            style: TextStyle(color: Palette.text, fontSize: 12, height: 1.5),
+          ),
+        ),
+      );
+
+  try {
+    await initAudio();
+  } catch (e) {
+    startupErrors.add('Audio : $e');
+  }
+
+  try {
+    await library.load();
+  } catch (e) {
+    startupErrors.add('Bibliothèque : $e');
+  }
 
   runApp(const MusicOrganizerApp());
 }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import '../main.dart';
+import '../services/audio_player_service.dart';
 import '../services/cover_cache.dart';
 import '../services/library_controller.dart';
 import 'folder_picker_screen.dart';
@@ -42,6 +43,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
           body: ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
             children: [
+              if (audioInitError != null || startupErrors.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 14),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Palette.shu.withAlpha(20),
+                    border: Border.all(color: Palette.shu),
+                    borderRadius: BorderRadius.circular(radiusMd),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.warning_amber_rounded,
+                              size: 17, color: Palette.shu),
+                          const SizedBox(width: 8),
+                          Text('Démarrage',
+                              style: TextStyle(
+                                  color: Palette.shu,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      if (audioInitError != null)
+                        SelectableText(
+                          'La session média n\'a pas pu être ouverte. La '
+                          'lecture fonctionne, mais sans commandes sur '
+                          'l\'écran verrouillé.\n\n$audioInitError',
+                          style: TextStyle(
+                              color: Palette.muted,
+                              fontSize: 11.5,
+                              height: 1.45),
+                        ),
+                      for (final e in startupErrors)
+                        SelectableText(e,
+                            style: TextStyle(
+                                color: Palette.muted,
+                                fontSize: 11.5,
+                                height: 1.45)),
+                    ],
+                  ),
+                ),
               _carte(
                 icone: Icons.folder_copy_outlined,
                 titre: 'Dossiers surveillés',
