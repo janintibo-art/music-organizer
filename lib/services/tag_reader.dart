@@ -46,6 +46,13 @@ class TagReader {
   /// trouvent toujours, inutile de charger un album entier en mémoire.
   static const int _teteMax = 2 * 1024 * 1024;
 
+  /// Ne lit que la pochette. Appelée depuis l'isolate principal, une fois
+  /// par album, plutôt que pour chaque morceau.
+  static Future<Uint8List?> readArtwork(String path) async {
+    final tags = await read(path);
+    return tags.artwork;
+  }
+
   static Future<AudioTags> read(String path) async {
     final extension = path.toLowerCase().split('.').last;
     try {

@@ -9,6 +9,7 @@ import '../main.dart';
 import '../models/track.dart';
 import 'cover_cache.dart';
 import 'music_scanner.dart';
+import 'tag_reader.dart';
 
 class AppSettings {
   String themeId = 'encre';
@@ -157,9 +158,13 @@ class LibraryController extends ChangeNotifier {
     await scan();
   }
 
+  /// Compte rendu du dernier scan, consultable dans les réglages.
+  String scanReport = '';
+
   Future<void> scan() async {
     if (busy || folders.isEmpty) return;
     busy = true;
+    scanReport = '';
     _report('Analyse des dossiers');
 
     try {
@@ -201,10 +206,50 @@ class LibraryController extends ChangeNotifier {
 
       lastNewCount = nouveaux;
       tracks = fusion;
+
+      // Les pochettes intégrées sont extraites ici, dans l'isolate
+      // principal : les modules n'y répondent que de ce côté.
+      _report('Extraction des pochettes');
+      await _extraireePochettes();
+
+      final rapport = StringBuffer(
+          '${tracks.length} morceau(x) au total, dont $nouveaux nouveau(x).');
+      if (injoignables.isNotEmpty) {
+        rapport.write(' ${injoignables.length} dossier(s) injoignable(s) : ');
+        rapport.write(injoignables.join(', '));
+      }
+      scanReport = rapport.toString();
       await save();
+    } catch (e) {
+      // Sans ce filet, une erreur pendant le scan remontait jusqu'à
+      // l'interface et la bibliothèque restait vide sans explication.
+      scanReport = 'Le scan a échoué : $e';
     } finally {
       busy = false;
       _report('');
+    }
+  }
+
+  /// Une pochette par dossier d'album, pas une par morceau.
+  Future<void> _extraireePochettes() async {
+    final traites = <String>{};
+    for (final t in tracks) {
+      if (t.coverPath != null || !t.embeddedArt) continue;
+      final dossier = p.dirname(t.path);
+      if (traites.contains(dossier)) continue;
+      traites.add(dossier);
+
+      final bytes = await TagReader.readArtwork(t.path);
+      if (bytes == null) continue;
+      final chemin = await CoverCache.saveEmbedded(t.path, bytes);
+      if (chemin == null) continue;
+
+      // La même image sert à tout le dossier.
+      for (final autre in tracks) {
+        if (autre.coverPath == null && p.dirname(autre.path) == dossier) {
+          autre.coverPath = chemin;
+        }
+      }
     }
   }
 

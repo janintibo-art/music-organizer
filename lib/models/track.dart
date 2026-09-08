@@ -18,6 +18,9 @@ class Track {
   /// Étiquettes absentes : le titre vient alors du nom de fichier.
   bool taggedFromFile;
 
+  /// Le fichier contient une pochette, pas encore extraite.
+  bool embeddedArt;
+
   int? addedAtMs;
   int playCount;
   int? lastPlayedAtMs;
@@ -36,6 +39,7 @@ class Track {
     this.durationMs,
     this.coverPath,
     this.taggedFromFile = false,
+    this.embeddedArt = false,
     this.addedAtMs,
     this.playCount = 0,
     this.lastPlayedAtMs,
@@ -67,6 +71,7 @@ class Track {
         'durationMs': durationMs,
         'coverPath': coverPath,
         'taggedFromFile': taggedFromFile,
+        'embeddedArt': embeddedArt,
         'addedAtMs': addedAtMs,
         'playCount': playCount,
         'lastPlayedAtMs': lastPlayedAtMs,
@@ -86,6 +91,7 @@ class Track {
         durationMs: j['durationMs'] as int?,
         coverPath: j['coverPath'] as String?,
         taggedFromFile: j['taggedFromFile'] as bool? ?? false,
+        embeddedArt: j['embeddedArt'] as bool? ?? false,
         addedAtMs: j['addedAtMs'] as int?,
         playCount: j['playCount'] as int? ?? 0,
         lastPlayedAtMs: j['lastPlayedAtMs'] as int?,

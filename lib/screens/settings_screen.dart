@@ -117,6 +117,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         size: 18),
                     label: const Text('Ajouter un dossier'),
                   ),
+                  if (library.scanReport.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: SelectableText(
+                        library.scanReport,
+                        style: TextStyle(
+                            color: library.scanReport.startsWith('Le scan')
+                                ? Palette.shu
+                                : Palette.kin,
+                            fontSize: 12,
+                            height: 1.4),
+                      ),
+                    ),
                   _interrupteur(
                     valeur: s.scanOnStart,
                     onChanged: (v) =>

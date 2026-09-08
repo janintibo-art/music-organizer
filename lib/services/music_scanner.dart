@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../models/track.dart';
-import 'cover_cache.dart';
 import 'tag_reader.dart';
 
 /// Parcourt les dossiers, lit les étiquettes et construit les morceaux.
@@ -22,6 +21,36 @@ class MusicScanner {
     // Artiste - Titre
     RegExp(r'^(.+?)\s+[-–]\s+(.+)$'),
   ];
+
+  static const List<String> _nomsPochette = [
+    'cover', 'folder', 'front', 'album', 'albumart', 'artwork', 'pochette',
+  ];
+
+  static const List<String> _extImages = ['.jpg', '.jpeg', '.png', '.webp'];
+
+  /// Image déposée à côté des morceaux. Pure lecture de fichiers, donc
+  /// utilisable dans un isolate.
+  static String? findCoverBeside(String trackPath) {
+    try {
+      final dir = Directory(p.dirname(trackPath));
+      final images = dir
+          .listSync(followLinks: false)
+          .whereType<File>()
+          .where((f) => _extImages.contains(p.extension(f.path).toLowerCase()))
+          .toList();
+      if (images.isEmpty) return null;
+      for (final nom in _nomsPochette) {
+        for (final f in images) {
+          if (p.basenameWithoutExtension(f.path).toLowerCase() == nom) {
+            return f.path;
+          }
+        }
+      }
+      return images.first.path;
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// Version destinée à `compute` : le scan tourne dans un isolate.
   static Future<List<Map<String, dynamic>>> scanJson(
@@ -101,13 +130,10 @@ class MusicScanner {
       modifie = File(path).statSync().modified.millisecondsSinceEpoch;
     } catch (_) {}
 
-    // La pochette intégrée part dans le cache pour ne pas gonfler la
-    // bibliothèque enregistrée.
-    String? cover;
-    if (tags.artwork != null) {
-      cover = await CoverCache.saveEmbedded(path, tags.artwork!);
-    }
-    cover ??= CoverCache.findBeside(path);
+    // Aucun appel de module ici : ce code tourne dans un isolate, où les
+    // canaux de plateforme ne répondent pas. Une pochette intégrée est
+    // seulement signalée ; elle sera extraite plus tard, une fois par album.
+    final cover = findCoverBeside(path);
 
     return Track(
       path: path,
@@ -121,6 +147,7 @@ class MusicScanner {
       genre: tags.genre,
       durationMs: tags.duration?.inMilliseconds,
       coverPath: cover,
+      embeddedArt: tags.artwork != null,
       taggedFromFile: tags.isEmpty,
       addedAtMs: modifie,
     );

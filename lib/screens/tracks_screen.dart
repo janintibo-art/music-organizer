@@ -445,13 +445,28 @@ class _TracksScreenState extends State<TracksScreen> {
                     fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Text(
-              'Choisis un dossier de musique. Les étiquettes des fichiers '
-              'sont lues en premier, et le chemin sert de secours quand '
-              'elles manquent.',
+              library.scanReport.isEmpty
+                  ? 'Choisis un dossier de musique. Les étiquettes des '
+                      'fichiers sont lues en premier, et le chemin sert de '
+                      'secours quand elles manquent.'
+                  : library.scanReport,
               textAlign: TextAlign.center,
               style: TextStyle(
-                  color: Palette.muted, height: 1.4, fontSize: 13.5),
+                  color: library.scanReport.startsWith('Le scan')
+                      ? Palette.shu
+                      : Palette.muted,
+                  height: 1.45,
+                  fontSize: 13.5),
             ),
+            if (library.folders.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Dossiers suivis : ${library.folders.join(', ')}',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    color: Palette.muted, fontSize: 11.5, height: 1.4),
+              ),
+            ],
             const SizedBox(height: 20),
             FilledButton.icon(
               onPressed: _addFolder,
